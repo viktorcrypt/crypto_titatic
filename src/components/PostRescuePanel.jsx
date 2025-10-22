@@ -7,9 +7,9 @@ import { useNavigate } from "react-router-dom";
 export default function PostRescuePanel({
   open,
   getSymbols,          // () => string[]
-  onRecorded,          // (result) => void   (опционально)
+  onRecorded,          // (result) => void   
 }) {
-  const [stage, setStage] = useState("idle"); // idle | sending | done | error
+  const [stage, setStage] = useState("idle"); 
   const [result, setResult] = useState(null);
   const [err, setErr] = useState("");
   const navigate = useNavigate();

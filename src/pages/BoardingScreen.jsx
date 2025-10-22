@@ -14,7 +14,7 @@ const LS_KEY = "sa_initialized";
 
 export default function BoardingScreen() {
   const [connecting, setConnecting] = useState(false);
-  const [ctx, setCtx] = useState(null); // { smartAccount, bundler, paymaster, address }
+  const [ctx, setCtx] = useState(null); 
   const [eoa, setEoa] = useState("");
   const [initialized, setInitialized] = useState(
     typeof window !== "undefined" && localStorage.getItem(LS_KEY) === "1"
@@ -22,7 +22,7 @@ export default function BoardingScreen() {
   const [lastOp, setLastOp] = useState(null);
   const navigate = useNavigate();
 
-  // если SA уже развёрнут on-chain — скрыть Initialize
+  
   useEffect(() => {
     async function checkDeployed() {
       try {
@@ -41,11 +41,11 @@ export default function BoardingScreen() {
   async function handleConnect() {
     try {
       setConnecting(true);
-      // 1) подключаем EOA (переключение/добавление сети происходит в connectEOA)
+      
       const { address } = await connectEOA();
       setEoa(address);
 
-      // 2) инициализируем Smart Account (без автодеплоя через EOA!)
+      
       const saCtx = await initSmartAccount();
       setCtx(saCtx);
     } catch (e) {
@@ -59,7 +59,7 @@ export default function BoardingScreen() {
   async function handleWarmup() {
     try {
       if (!ctx) throw new Error("Smart Account not initialized yet");
-      const userOpHash = await warmup(ctx); // газлесс userOp -> развернёт SA, если нужно
+      const userOpHash = await warmup(ctx); 
       setInitialized(true);
       localStorage.setItem(LS_KEY, "1");
       setLastOp({
@@ -99,7 +99,7 @@ export default function BoardingScreen() {
             Smart Account: {ctx.address.slice(0, 6)}...{ctx.address.slice(-4)}
           </div>
 
-          {/* Кнопка инициализации показывается только до первого успешного gasless-вызова */}
+          
           {!initialized && (
             <button
               onClick={handleWarmup}
@@ -109,7 +109,7 @@ export default function BoardingScreen() {
             </button>
           )}
 
-          {/* мягкий баннер со ссылками вместо alert */}
+          
           {lastOp && (
             <div className="mt-2 text-xs text-white/70 space-y-1">
               <div>

@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-const LINE_DURATION = 3800;     // время показа одной строки (мс)
-const OUTRO_FADE = 1200;        // длительность затемнения перед сценой корабля (мс)
-const AFTER_LAST_HOLD = 800;    // пауза после последней строки (мс)
+const LINE_DURATION = 3800;     
+const OUTRO_FADE = 1200;        
+const AFTER_LAST_HOLD = 800;    
 
 export default function IntroScene() {
   const navigate = useNavigate();
@@ -23,14 +23,14 @@ export default function IntroScene() {
     "Who will you save?",
   ];
 
-  // Пошаговая смена строк
+  
   useEffect(() => {
     if (exiting) return;
     if (step < lines.length - 1) {
       const t = setTimeout(() => setStep((s) => s + 1), LINE_DURATION);
       return () => clearTimeout(t);
     } else {
-      // финальная пауза и плавный уход
+      
       const t = setTimeout(() => startExit(), AFTER_LAST_HOLD);
       return () => clearTimeout(t);
     }
@@ -38,14 +38,14 @@ export default function IntroScene() {
 
   function startExit() {
     setExiting(true);
-    // плавно заглушаем звук
+    
     fadeAudioOut(stormRef.current, 0.6 * OUTRO_FADE);
     fadeAudioOut(creakRef.current, 0.6 * OUTRO_FADE);
-    // и после фейда — уходим на сцену корабля
+    
     setTimeout(() => navigate("/app"), OUTRO_FADE);
   }
 
-  // Звук: мягкий запуск + мелкие эффекты
+  
   useEffect(() => {
     const storm = stormRef.current;
     const creak = creakRef.current;
@@ -83,7 +83,7 @@ export default function IntroScene() {
         <Wave className="opacity-40" speed={66} reverse />
       </div>
 
-      {/* корабль (силуэт) — крупнее */}
+      {/* корабль (силуэт) */}
       <motion.div
         className="absolute left-1/2 top-[14%] w-[1100px] -translate-x-1/2"
         animate={{ rotate: [-7, -9, -7], y: [0, 4, 0] }}

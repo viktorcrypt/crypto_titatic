@@ -7,7 +7,7 @@ export default function LifeboatDrop({
   onRemove,
   svgSrc = "/boats/boat.svg",
   width = 520,
-  rocking = true, // покачивание
+  rocking = true, 
 }) {
   const used = useMemo(() => picked.reduce((s, t) => s + t.weight, 0), [picked]);
   const pct = Math.min(100, Math.round((used / capacity) * 100));
@@ -35,7 +35,7 @@ export default function LifeboatDrop({
       title="Lifeboat"
       style={{ width: W, height: H }}
     >
-      {/* 1) лодка */}
+      
       <img
         src={svgSrc}
         alt="lifeboat"
@@ -43,7 +43,7 @@ export default function LifeboatDrop({
         draggable={false}
       />
 
-      {/* 2) зона дропа */}
+      
       <div
         className="absolute rounded-full bg-white/70 backdrop-blur z-20"
         style={{
@@ -55,20 +55,20 @@ export default function LifeboatDrop({
         }}
       />
 
-      {/* 3) индикатор — ПОДНЯЛ ВЫШЕ (было bottom 7%, стало ~16%) */}
+      
       <div
         className="absolute rounded-full bg-black/20 overflow-hidden z-20"
         style={{
           left: W * 0.18,
           right: W * 0.18,
-          bottom: H * 0.16,     // << выше
+          bottom: H * 0.16,     
           height: 8,
         }}
       >
         <div className="h-full" style={{ width: `${pct}%` }} />
       </div>
 
-      {/* 4) монеты — поверх всего */}
+      
       <div
         className="absolute flex items-center justify-center gap-6 px-10 z-30"
         style={{

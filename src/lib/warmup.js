@@ -17,11 +17,11 @@ export async function warmup(ctx) {
     selectionHash,
   ]);
 
-  // одна userOp через бандлер/paymaster Pimlico
+  
   const { hash } = await sendCalls(ctx, {
     to: RESCUELOG_ADDRESS,
     data,
     value: 0n,
   });
-  return hash; // userOpHash
+  return hash; 
 }

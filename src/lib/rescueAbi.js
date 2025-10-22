@@ -1,11 +1,7 @@
-// src/lib/rescueAbi.js
-
-// ✅ Поставь адрес своего свежедеплойного контракта
-// (из твоего лога: 0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41)
 export const RESCUE_LOG_ADDR = "0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41";
 
 export const RESCUE_LOG_ABI = [
-  // --- write ---
+  
   {
     type: "function",
     name: "logRescue",
@@ -19,7 +15,7 @@ export const RESCUE_LOG_ABI = [
     outputs: [],
   },
 
-  // --- read (leaderboard) ---
+  
   {
     type: "function",
     name: "getCounts",
@@ -35,7 +31,7 @@ export const RESCUE_LOG_ABI = [
     outputs: [{ name: "counts", type: "uint256[]" }],
   },
 
-  // --- event ---
+ 
   {
     type: "event",
     name: "Rescued",
@@ -50,6 +46,6 @@ export const RESCUE_LOG_ABI = [
   },
 ];
 
-// алиасы для старых импортов (если где-то использовались)
+
 export const RESCUELOG_ABI = RESCUE_LOG_ABI;
 export const RESCUELOG_ADDR = RESCUE_LOG_ADDR;

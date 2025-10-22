@@ -50,7 +50,7 @@ export default function AgentPage() {
       const data = makeCalldata(RESCUE_LOG_ABI, "logRescue", [
         symbols,
         100,
-        true, // byAgent = true
+        true, 
         "0x" + Math.random().toString(16).slice(2).padEnd(64, "0"),
       ]);
 

@@ -5,16 +5,15 @@ import TokenDraggable from "../components/TokenDraggable.jsx";
 import LifeboatDrop from "../components/LifeboatDrop.jsx";
 import { TOKENS, CAPACITY } from "../lib/tokens.js";
 import { deckPos } from "../lib/deck.js";
-import PostRescuePanel from "../components/PostRescuePanel.jsx"; // ⬅️ добавлено
+import PostRescuePanel from "../components/PostRescuePanel.jsx"; 
 
 const BOAT_CAPACITY = CAPACITY;
-const PHONK_BPM = 110; // ← подгони под свой трек (100–140 ок)
+const PHONK_BPM = 110; 
 
-// плавное затухание/нарастание аудио
-function fadeAudio(el, { to = 0, ms = 7000 }) { // ⬅️ 7 секунд по умолчанию
-  if (!el) return;
+
+function fadeAudio(el, { to = 0, ms = 7000 }) { 
   const from = el.volume ?? 0.5;
-  const steps = 60; // ⬅️ плавнее, чем 20
+  const steps = 60; 
   const dt = ms / steps;
   let i = 0;
   const id = setInterval(() => {
@@ -31,8 +30,8 @@ function fadeAudio(el, { to = 0, ms = 7000 }) { // ⬅️ 7 секунд по у
 export default function AppPage() {
   const [boat, setBoat] = useState([]);
   const [sinking, setSinking] = useState(false);
-  const [rescueDone, setRescueDone] = useState(false); // управляет троллфейсом и фонком
-  const [showRecord, setShowRecord] = useState(false);  // ⬅️ новая светлая сцена
+  const [rescueDone, setRescueDone] = useState(false); 
+  const [showRecord, setShowRecord] = useState(false);  
   const stormRef = useRef(null);
   const phonkRef = useRef(null);
   const [muted, setMuted] = useState(false);
@@ -70,10 +69,10 @@ export default function AppPage() {
     const storm = stormRef.current;
     const phonk = phonkRef.current;
 
-    // 1) Троллфейс сразу
+   
     setRescueDone(true);
 
-    // 2) Фонк стартует сразу и плавно набирает громкость (7с)
+    
     if (phonk) {
       phonk.loop = true;
       try {
@@ -83,35 +82,35 @@ export default function AppPage() {
       } catch (_) {}
     }
 
-    // 3) Шторм плавно затухает (7с)
+    
     if (storm) {
       fadeAudio(storm, { to: 0, ms: 7000 });
     }
 
-    // 4) Запускаем утопление/отплытие
+    
     setSinking(true);
 
-    // 5) По завершении (≈7.2с) показываем светлую сцену с записью результатов
+    
     setTimeout(() => setShowRecord(true), 7200);
   }
 
-  // хелперы для PostRescuePanel
+  
   const getSymbols = () => boat.map((b) => b.symbol);
   function onRecorded() {
-    // можно показать тост/уведомление при успехе — оставлю тихо
+    
   }
   function onShowStats() {
-    // TODO: перейти на страницу/модал со статистикой (Envio)
+    
     alert("Лидерборд спасённых (Envio) — добавим дальше 👍");
   }
   function onDelegate() {
-    // TODO: модал делегации MetaMask Smart Accounts
+    
     alert("Делегирование агенту — добавим дальше 👍");
   }
 
   return (
     <div className="relative">
-      {/* пробрасываем beat/bpm — если ShipScene их не использует, просто проигнорирует */}
+      
       <ShipScene sinking={sinking} beat={true} bpm={PHONK_BPM}>
         {/* mute */}
         <div className="absolute right-6 top-6 z-[200]" style={{ transform: "rotate(10deg)" }}>
@@ -123,11 +122,11 @@ export default function AppPage() {
               setMuted(next);
               if (storm) storm.muted = next;
               if (phonk) phonk.muted = next;
-              // если размьютим после резкью — убедимся, что фонк играет
+              
               if (!next && rescueDone && phonk && phonk.paused) {
                 phonk.play().catch(() => {});
               }
-              // если размьютим до резкью — вернём шторм
+              
               if (!next && !rescueDone && storm && storm.paused) {
                 storm.play().catch(() => {});
               }
@@ -138,21 +137,21 @@ export default function AppPage() {
           </button>
         </div>
 
-        {/* звуки */}
+       
         <audio ref={stormRef} src="/sfx/storm.mp3" preload="auto" />
         <audio ref={phonkRef} src="/sfx/phonkmusic.mp3" preload="auto" />
 
-        {/* монеты на палубе (пока не тонем) */}
+        
         {!sinking &&
           TOKENS.filter((t) => !isAlready(t.symbol)).map((t) => (
             <TokenDraggable key={t.symbol} token={t} pos={deckPos(t.symbol)} />
           ))}
 
-        {/* Шлюпка + локальная кнопка рядом */}
+        
         <div
           className={`absolute left-1/2 top-[47vh] -translate-x-1/2 z-[150] transition-transform duration-[7000ms] ease-in-out ${
             sinking ? "translate-x-[400px] translate-y-[-60px]" : ""
-          }`} // ⬅️ было 5s, теперь 7000ms
+          }`} 
           style={{ transform: "translateX(-50%) rotate(10deg)" }}
         >
           <LifeboatDrop
@@ -180,7 +179,7 @@ export default function AppPage() {
           </div>
         </div>
 
-        {/* Троллфейс: появляется сразу после клика и остаётся поверх */}
+        
         {rescueDone && (
           <img
             src="/troll.png"
@@ -190,7 +189,7 @@ export default function AppPage() {
         )}
       </ShipScene>
 
-      {/* HUD — дубль кнопки (на всякий случай можно удалить, если мешает) */}
+      
       <div className="fixed inset-x-0 bottom-6 z-[200] flex justify-center pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-4 rounded-2xl bg-black/40 border border-white/15 px-4 py-2 backdrop-blur">
           <span className="text-sm text-white/80">
@@ -206,7 +205,7 @@ export default function AppPage() {
         </div>
       </div>
 
-      {/* Светлая сцена поверх — запись результатов (ончаин будет в ней) */}
+      
       <PostRescuePanel
         open={showRecord}
         getSymbols={() => boat.map((b) => b.symbol)}

@@ -1,4 +1,3 @@
-// src/lib/smartAccount.js
 import {
   createPublicClient,
   createWalletClient,
@@ -17,8 +16,8 @@ import {
 } from "@metamask/delegation-toolkit";
 import { getEip1193Provider } from "./fcProvider";
 
-// ===== ENV
-const RPC = import.meta.env.VITE_MONAD_RPC; // <- обычный RPC (Alchemy/другой публичный), НЕ Pimlico
+
+const RPC = import.meta.env.VITE_MONAD_RPC; 
 const PIMLICO_CHAIN = import.meta.env.VITE_PIMLICO_CHAIN || "10143";
 const PIMLICO_API_KEY = import.meta.env.VITE_PIMLICO_API_KEY;
 const PIMLICO_RPC = import.meta.env.VITE_BUNDLER_URL || `https://api.pimlico.io/v2/${PIMLICO_CHAIN}/rpc?apikey=${PIMLICO_API_KEY}`;
@@ -42,7 +41,7 @@ export function makeCalldata(abi, fn, args) {
 }
 
 async function ensureMonadChain(eip1193) {
-  const targetHex = `0x${monadTestnet.id.toString(16)}`; // 0x279f
+  const targetHex = `0x${monadTestnet.id.toString(16)}`; 
   const current = await eip1193.request({ method: "eth_chainId" });
   if (current === targetHex) return;
   try {

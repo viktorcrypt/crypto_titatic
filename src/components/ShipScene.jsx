@@ -1,11 +1,11 @@
 // src/components/ShipScene.jsx
 export default function ShipScene({ children, sinking = false, beat = false, bpm = 100 }) {
-  // период удара в секундах
+  
   const beatDur = `${Math.max(0.25, 60 / bpm)}s`;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#060a14] text-white">
-      {/* фон */}
+      
       <div className="absolute inset-0 -z-30 bg-[radial-gradient(120%_100%_at_50%_100%,#081427_0%,#060a14_45%,#04070e_100%)]" />
       <div
         className="pointer-events-none absolute inset-0 -z-20 opacity-30"
@@ -16,7 +16,7 @@ export default function ShipScene({ children, sinking = false, beat = false, bpm
         }}
       />
 
-      {/* волны */}
+      
       <div className="absolute inset-x-0 bottom-0 h-1/3 -z-10">
         <div className="absolute bottom-0 left-0 h-48 w-[200%] opacity-60" style={{ animation: 'waveMove 44s linear infinite' }}>
           <WaveSVG className="absolute bottom-0 left-0 w-1/2 h-48" />
@@ -29,19 +29,19 @@ export default function ShipScene({ children, sinking = false, beat = false, bpm
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#081427cc] to-transparent" />
       </div>
 
-      {/* КОРАБЛЬ */}
+     
       <div className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2">
-        {/* ВНЕШНЯЯ ОБЁРТКА С БИТОМ (не мешает нижнему sink-трансформу svg) */}
+        
         <div
           className={`relative z-10 ${sinking ? '' : 'ship'} ${beat && sinking ? 'ship-beat' : ''} ${sinking ? 'ship-sink' : ''}`}
           style={{
             width: "clamp(900px, 78vw, 1600px)",
             transformOrigin: "center",
-            animationDuration: beatDur, // для ship-beat
+            animationDuration: beatDur, 
           }}
         >
           <svg viewBox="0 0 1400 400" className="w-full h-auto pointer-events-none">
-            {/* базовый наклон */}
+            
             <g transform="rotate(-10 700 200)">
               <path d="M850 260 Q1100 290 1300 265" stroke="#7ec8ff66" strokeWidth="10" fill="none" />
               <path d="M120 260 L1200 260 L1320 320 L200 320 Z" fill="#00000035"/>
@@ -64,7 +64,7 @@ export default function ShipScene({ children, sinking = false, beat = false, bpm
             </g>
           </svg>
 
-          {/* палуба с токенами */}
+          
           <div
             className={`absolute z-20 deck ${sinking ? 'deck-sink' : 'deck-tilt'}`}
             style={{ left:"20%", top:"28%", width:"60%", height:"12%" }}
@@ -79,7 +79,7 @@ export default function ShipScene({ children, sinking = false, beat = false, bpm
         @keyframes shipBob { 0%{transform:translateY(0)}50%{transform:translateY(6px)}100%{transform:translateY(0)} }
         .ship { animation: shipBob 4.5s ease-in-out infinite; }
 
-        /* Вибрация под такт: короткий импульс на каждую долю */
+        
         @keyframes shipBeatPulse {
           0%   { transform: translateY(0) rotate(0); }
           10%  { transform: translateY(2px) rotate(-0.6deg); }
