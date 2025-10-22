@@ -1,8 +1,11 @@
-// ✅ адрес нового контракта RescueLog на Monad Testnet
+// src/lib/rescueAbi.js
+
+// ✅ Поставь адрес своего свежедеплойного контракта
+// (из твоего лога: 0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41)
 export const RESCUE_LOG_ADDR = "0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41";
 
-// ✅ Полное ABI с новыми view-функциями
 export const RESCUE_LOG_ABI = [
+  // --- write ---
   {
     type: "function",
     name: "logRescue",
@@ -15,33 +18,24 @@ export const RESCUE_LOG_ABI = [
     ],
     outputs: [],
   },
+
+  // --- read (leaderboard) ---
   {
     type: "function",
     name: "getCounts",
     stateMutability: "view",
     inputs: [{ name: "symbols", type: "string[]" }],
-    outputs: [{ type: "uint256[]" }],
+    outputs: [{ name: "counts", type: "uint256[]" }],
   },
   {
     type: "function",
-    name: "getAllSymbols",
+    name: "getAgentCounts",
     stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "string[]" }],
+    inputs: [{ name: "symbols", type: "string[]" }],
+    outputs: [{ name: "counts", type: "uint256[]" }],
   },
-  {
-    type: "function",
-    name: "getLastRescue",
-    stateMutability: "view",
-    inputs: [{ name: "user", type: "address" }],
-    outputs: [
-      { type: "bytes32" },
-      { type: "string[]" },
-      { type: "uint256" },
-      { type: "bool" },
-      { type: "uint64" },
-    ],
-  },
+
+  // --- event ---
   {
     type: "event",
     name: "Rescued",
@@ -56,6 +50,6 @@ export const RESCUE_LOG_ABI = [
   },
 ];
 
-// алиасы, чтобы ничего не ломалось при импортах
+// алиасы для старых импортов (если где-то использовались)
 export const RESCUELOG_ABI = RESCUE_LOG_ABI;
 export const RESCUELOG_ADDR = RESCUE_LOG_ADDR;
