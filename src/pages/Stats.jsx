@@ -1,4 +1,3 @@
-// src/pages/Stats.jsx
 import { useEffect, useMemo, useState } from "react";
 import { createPublicClient, http } from "viem";
 import { monadTestnet } from "viem/chains";
@@ -29,7 +28,6 @@ export default function StatsPage() {
       try {
         const symbols = TOKENS.map((t) => t.symbol);
 
-        // читаем только общие счётчики — БЕЗ agent-меток
         const counts = await client.readContract({
           address: RESCUE_LOG_ADDR,
           abi: RESCUE_LOG_ABI,
@@ -56,9 +54,21 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-black text-white px-5 py-6">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-4">
-          <Link to="/" className="text-sm underline opacity-80 hover:opacity-100">
+        <div className="mb-4 flex items-center justify-between">
+          {/* back to ship (scene) */}
+          <Link
+            to="/app"
+            className="text-sm underline opacity-80 hover:opacity-100"
+          >
             ← Back to ship
+          </Link>
+
+          {/* jump to Agent page */}
+          <Link
+            to="/agent"
+            className="rounded-lg px-3 py-1 bg-white/10 hover:bg-white/15 border border-white/20 text-sm"
+          >
+            Agent strategies →
           </Link>
         </div>
 
