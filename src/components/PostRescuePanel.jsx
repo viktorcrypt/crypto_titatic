@@ -2,24 +2,22 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { recordRescue } from "../lib/onchain.js";
+import { useNavigate } from "react-router-dom";
 
 export default function PostRescuePanel({
   open,
   getSymbols,          // () => string[]
-  onRecorded,          // ({userOpHash,userOpUrl}) => void
-  onShowStats,         // () => void
-  onDelegate,          // () => void
+  onRecorded,          // (result) => void   (опционально)
 }) {
   const [stage, setStage] = useState("idle"); // idle | sending | done | error
   const [result, setResult] = useState(null);
   const [err, setErr] = useState("");
+  const navigate = useNavigate();
 
   async function handleRecord() {
-    if (stage === "sending") return;
     try {
       setStage("sending");
       const symbols = getSymbols();
-      console.log("[UI] record click, symbols:", symbols);
       const r = await recordRescue(symbols);
       setResult(r);
       setStage("done");
@@ -59,8 +57,7 @@ export default function PostRescuePanel({
               <>
                 <h2 className="text-2xl font-bold mb-2">Record your rescue</h2>
                 <p className="text-black/70 mb-6">
-                  We’ll write the coins you saved to Monad testnet via a gasless UserOperation.
-                  MetaMask will ask you to sign a short confirmation message.
+                  We’ll write the coins you saved to Monad testnet. This will trigger a gasless UserOperation.
                 </p>
                 <button
                   onClick={handleRecord}
@@ -73,7 +70,7 @@ export default function PostRescuePanel({
 
             {stage === "sending" && (
               <div className="text-center">
-                <div className="mb-4 text-lg">Submitting… check MetaMask</div>
+                <div className="mb-4 animate-pulse text-lg">Submitting…</div>
                 <div className="mx-auto h-2 w-full rounded-full bg-black/10 overflow-hidden">
                   <div className="h-full w-1/2 bg-black/80 animate-[pulse_1.2s_ease-in-out_infinite]" />
                 </div>
@@ -99,13 +96,13 @@ export default function PostRescuePanel({
 
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={onShowStats}
+                    onClick={() => navigate("/stats")}
                     className="rounded-xl px-5 py-3 bg-emerald-600 text-white hover:bg-emerald-700"
                   >
                     See who gets rescued most
                   </button>
                   <button
-                    onClick={onDelegate}
+                    onClick={() => navigate("/agent")}
                     className="rounded-xl px-5 py-3 bg-purple-600 text-white hover:bg-purple-700"
                   >
                     Let an agent decide for me
@@ -120,7 +117,7 @@ export default function PostRescuePanel({
                 <p className="text-red-600 mb-4">{err}</p>
                 <button
                   onClick={() => setStage("idle")}
-                  className="rounded-xl px-4 py-2 bg-black text-white"
+                  className="w-full rounded-xl px-5 py-3 bg-black text-white hover:bg-black/90"
                 >
                   Try again
                 </button>
