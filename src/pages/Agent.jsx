@@ -1,8 +1,8 @@
 // src/pages/Agent.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ensureCtx, sendCalls, makeCalldata, userOpTrackUrl } from "../onchain";
-import { RESCUE_LOG_ABI, RESCUE_LOG_ADDR } from "../contracts/rescueAbi";
+import { ensureCtx, sendCalls, makeCalldata, userOpTrackUrl } from "../lib/onchain";
+import { RESCUE_LOG_ABI, RESCUE_LOG_ADDR } from "../lib/rescueAbi";
 
 export default function AgentPage() {
   const navigate = useNavigate();
