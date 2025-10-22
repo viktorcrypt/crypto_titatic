@@ -90,9 +90,4 @@ export async function recordRescue(symbols, opts = {}) {
     userOpUrl: userOpTrackUrl(hash),
   };
 }
-
-import { encodeFunctionData } from "viem";
-
-export function makeCalldata(abi, functionName, args) {
-  return encodeFunctionData({ abi, functionName, args });
-}
+export { makeCalldata } from "../lib/smartAccount.js";
