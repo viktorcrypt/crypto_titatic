@@ -56,6 +56,6 @@ The Agent system is currently in development and will be finalized post-Mission 
 
 🌐 Live Demo
 
-Frontend: https://crypto-titanic.vercel.app
+Frontend: https://crypto-titatic.vercel.app
 
 Contract: 0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41
