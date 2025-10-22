@@ -1,6 +1,7 @@
-// ПОДТВЕРДИ адрес — тот, что ты прислал ранее (RescueLog на Monad testnet)
-export const RESCUE_LOG_ADDR = "0x578D6936914d01a7d6225401715A4ee75C7D7602";
+// ✅ адрес нового контракта RescueLog на Monad Testnet
+export const RESCUE_LOG_ADDR = "0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41";
 
+// ✅ Полное ABI с новыми view-функциями
 export const RESCUE_LOG_ABI = [
   {
     type: "function",
@@ -13,6 +14,33 @@ export const RESCUE_LOG_ABI = [
       { name: "selectionHash", type: "bytes32" },
     ],
     outputs: [],
+  },
+  {
+    type: "function",
+    name: "getCounts",
+    stateMutability: "view",
+    inputs: [{ name: "symbols", type: "string[]" }],
+    outputs: [{ type: "uint256[]" }],
+  },
+  {
+    type: "function",
+    name: "getAllSymbols",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "string[]" }],
+  },
+  {
+    type: "function",
+    name: "getLastRescue",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [
+      { type: "bytes32" },
+      { type: "string[]" },
+      { type: "uint256" },
+      { type: "bool" },
+      { type: "uint64" },
+    ],
   },
   {
     type: "event",
@@ -28,6 +56,6 @@ export const RESCUE_LOG_ABI = [
   },
 ];
 
-// алиасы, если где-то импортируются старые имена
+// алиасы, чтобы ничего не ломалось при импортах
 export const RESCUELOG_ABI = RESCUE_LOG_ABI;
 export const RESCUELOG_ADDR = RESCUE_LOG_ADDR;
