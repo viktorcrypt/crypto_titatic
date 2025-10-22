@@ -1,16 +1,61 @@
-# React + Vite
+🚢 Crypto Titanic — Monad Mission 8
+🧭 Overview
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Crypto Titanic is a MetaMask Smart Account–powered dApp built for Monad Mission 8.
+The ship is sinking — and players must decide which tokens to save before it’s too late.
+Every “rescue” is recorded on-chain through a gasless Smart Account UserOperation, proving your conviction without paying gas.
 
-Currently, two official plugins are available:
+This project demonstrates Account Abstraction (AA) on Monad Testnet — including custom calldata composition, bundler execution, and on-chain aggregation — wrapped in a playful, story-driven UX.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Feature                       | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Smart Account Integration | MetaMask Smart Account handles all contract calls and signatures.  |
+| Gasless Execution         | Rescues are sent through a bundler — no direct EOA gas needed.     |
+| On-chain Aggregation      | Contract maintains direct rescue counts (no log scanning).         |
+| Live Leaderboard          | getCounts() provides real-time on-chain totals per token.        |
+| Polished Monad UI         | A thematic “sinking ship” interface with elegant visuals.          |
+| Agent Mode (WIP)          | Will allow users to delegate rescues to an automated strategy bot. |
 
-## React Compiler
+🎮 Gameplay Concept
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+“The markets are sinking. Only the brave decide what to save.”
 
-## Expanding the ESLint configuration
+Connect MetaMask Smart Account
+– Creates or restores a gasless account on Monad.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Select tokens to rescue
+– Choose your survivors (e.g. BTC, SOL, MON, etc.).
+
+Confirm the mission
+– Your Smart Account signs & executes the rescue.
+
+Check the Leaderboard
+– See global totals updated in real time.
+
+Let the Agent decide for you.
+
+🧰 Stack
+
+React + Vite
+Viem
+Hardhat
+TailwindCSS
+MetaMask Smart Accounts
+Vercel (deployment)
+Monad Testnet RPC (via DRPC)
+
+🧩 Agent Mode
+
+The Agent Mode will introduce automated rescues through delegated strategies —
+letting users choose between options like:
+“Max Market Cap”
+“Underdogs”
+“Balanced Mix”
+These will generate a deterministic hash of the chosen tokens and submit a gasless rescue, all handled via Smart Account.
+The Agent system is currently in development and will be finalized post-Mission 8 submission.
+
+🌐 Live Demo
+
+Frontend: https://crypto-titanic.vercel.app
+
+Contract: 0x72e9C475F9b3bB810fBb0d758c3484Cd52b5db41
