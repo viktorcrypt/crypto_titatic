@@ -4,7 +4,7 @@ export default function TokenDraggable({ token, pos }) {
     
     const img = new Image();
     img.src = /logos/${token.symbol.toLowerCase()}.svg;
-    e.dataTransfer.setDragImage(img, 24, 24);
+    e.dataTransfer.setDragImage(img, 16, 16);
   }
 
   return (
