@@ -1,74 +1,41 @@
 import {
   createPublicClient,
-  createWalletClient,
   http,
-  custom,
   encodeFunctionData,
 } from "viem";
-import {
-  createBundlerClient,
-  createPaymasterClient,
-} from "viem/account-abstraction";
-import { monadTestnet } from "./chain";
+import { sepolia } from "viem/chains";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   Implementation,
   toMetaMaskSmartAccount,
-} from "@metamask/delegation-toolkit";
-import { getEip1193Provider } from "./fcProvider";
+} from "@metamask/smart-accounts-kit";
+import { erc7715ProviderActions } from "@metamask/smart-accounts-kit/actions";
+import { bundlerClientFactory } from "../services/bundlerClient.js";
+import { pimlicoClientFactory } from "../services/pimlicoClient.js";
 
-
-const RPC = import.meta.env.VITE_MONAD_RPC; 
-const PIMLICO_CHAIN = import.meta.env.VITE_PIMLICO_CHAIN || "10143";
-const PIMLICO_API_KEY = import.meta.env.VITE_PIMLICO_API_KEY;
-const PIMLICO_RPC = import.meta.env.VITE_BUNDLER_URL || `https://api.pimlico.io/v2/${PIMLICO_CHAIN}/rpc?apikey=${PIMLICO_API_KEY}`;
-
-if (!RPC) throw new Error("Missing VITE_MONAD_RPC");
-if (!PIMLICO_API_KEY) throw new Error("Missing VITE_PIMLICO_API_KEY");
+// Sepolia Configuration
+const SEPOLIA_RPC = import.meta.env.VITE_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
+const SEPOLIA_CHAIN_ID = 11155111;
 
 export const ENTRY_POINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 
 export function userOpTrackUrl(hash) {
   return `https://pimlico.io/explorer/userOp?hash=${hash}`;
 }
-export function monadAddressUrl(addr) {
-  return `https://testnet.monadexplorer.com/address/${addr}`;
-}
-export function makePublicClient() {
-  return createPublicClient({ chain: monadTestnet, transport: http(RPC) });
-}
-export function makeCalldata(abi, fn, args) {
-  return encodeFunctionData({ abi, functionName: fn, args });
+
+export function sepoliaAddressUrl(addr) {
+  return `https://sepolia.etherscan.io/address/${addr}`;
 }
 
-async function ensureMonadChain(eip1193) {
-  const targetHex = `0x${monadTestnet.id.toString(16)}`; 
-  const current = await eip1193.request({ method: "eth_chainId" });
-  if (current === targetHex) return;
-  try {
-    await eip1193.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: targetHex }],
-    });
-  } catch (err) {
-    if (err?.code === 4902) {
-      await eip1193.request({
-        method: "wallet_addEthereumChain",
-        params: [{
-          chainId: targetHex,
-          chainName: "Monad Testnet",
-          rpcUrls: [RPC],
-          nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
-          blockExplorerUrls: ["https://testnet.monadexplorer.com/"],
-        }],
-      });
-      await eip1193.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: targetHex }],
-      });
-    } else {
-      throw err;
-    }
-  }
+export function makePublicClient() {
+  return createPublicClient({ 
+    chain: sepolia, 
+    transport: http(SEPOLIA_RPC) 
+  });
+}
+
+export function makeCalldata(abi, fn, args) {
+  return encodeFunctionData({ abi, functionName: fn, args });
 }
 
 function withTimeout(promise, ms, label) {
@@ -82,117 +49,235 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
-async function getPimlicoGas(bundler) {
-  try {
-    if (typeof bundler.getUserOperationGasPrice === "function") {
-      const res = await bundler.getUserOperationGasPrice();
-      const pick = (o) => o?.standard ?? o?.fast ?? o?.slow ?? o;
-      const tier = pick(res);
-      return {
-        maxFeePerGas: BigInt(tier.maxFeePerGas),
-        maxPriorityFeePerGas: BigInt(tier.maxPriorityFeePerGas),
-      };
-    }
-    const rpc = await bundler.request({ method: "pimlico_getUserOperationGasPrice", params: [] });
-    const tier = rpc?.standard ?? rpc?.fast ?? rpc?.slow ?? rpc;
-    return {
-      maxFeePerGas: BigInt(tier.maxFeePerGas),
-      maxPriorityFeePerGas: BigInt(tier.maxPriorityFeePerGas),
-    };
-  } catch (e) {
-    console.warn("[gas] fallback:", e?.message || e);
-    return { maxFeePerGas: 200_000_000_000n, maxPriorityFeePerGas: 2_000_000_000n };
+// Get or create session key from localStorage
+function getSessionKey() {
+  if (typeof window === "undefined") return null;
+  
+  let privKey = localStorage.getItem("crypto_titanic_session_key");
+  if (!privKey) {
+    privKey = generatePrivateKey();
+    localStorage.setItem("crypto_titanic_session_key", privKey);
+    console.log("[SA] 🔑 Generated new session key");
   }
+  
+  return privateKeyToAccount(privKey);
 }
 
-export async function initSmartAccount() {
-  console.log("[SA] init start");
-  const eip1193 = await getEip1193Provider();
+/**
+ * Creates a session account (Hybrid Smart Account) with a local private key
+ * This is the account that will be granted permissions
+ */
+export async function createSessionAccount(publicClient) {
+  console.log("[SA] 🎫 Creating Session Account...");
+  
+  const account = getSessionKey();
+  if (!account) throw new Error("Failed to create session key");
+  
+  console.log("[SA] 🔑 Session key address:", account.address);
 
-  console.log("[SA] ensure chain…");
-  await ensureMonadChain(eip1193);
-
-  console.log("[SA] build wallet clients…");
-  const tmpClient = createWalletClient({ chain: monadTestnet, transport: custom(eip1193) });
-  const [ownerAddress] = await tmpClient.requestAddresses();
-  const walletClient = createWalletClient({
-    account: ownerAddress,
-    chain: monadTestnet,
-    transport: custom(eip1193),
-  });
-
-  console.log("[SA] public client ping…");
-  const publicClient = makePublicClient();
-  await withTimeout(publicClient.getChainId(), 4000, "publicClient.getChainId");
-
-  console.log("[SA] toMetaMaskSmartAccount…");
-  const smartAccount = await toMetaMaskSmartAccount({
+  // Create Hybrid Smart Account - EXACTLY as in their code
+  const sessionAccount = await toMetaMaskSmartAccount({
     client: publicClient,
     implementation: Implementation.Hybrid,
-    deployParams: [ownerAddress, [], [], []],
+    deployParams: [account.address, [], [], []],
     deploySalt: "0x",
-    signer: { walletClient },
-    chain: monadTestnet,
+    signer: { account },
   });
 
-  console.log("[SA] getCode (is deployed?)…", smartAccount.address);
-  let code = "0x";
-  try {
-    code = await withTimeout(
-      publicClient.getCode({ address: smartAccount.address }),
-      5000,
-      "publicClient.getCode"
-    );
-  } catch (e) {
-    console.warn("[SA] getCode warn:", e.message || e);
-  }
-
-  if (!code || code === "0x") {
-    console.log("[SA] NOT deployed. Manual deploy via EOA (factory) …");
-    const { factory, factoryData } = await smartAccount.getFactoryArgs();
-    const tx = await walletClient.sendTransaction({ to: factory, data: factoryData });
-    console.log("[SA] deploy tx:", tx);
-    await publicClient.waitForTransactionReceipt({ hash: tx });
-    smartAccount.initCode = "0x";
-    console.log("[SA] deployed via EOA ✅");
-  } else {
-    smartAccount.initCode = "0x";
-    console.log("[SA] already deployed ✅");
-  }
-
-  console.log("[SA] create bundler/paymaster clients…");
-  const bundler = createBundlerClient({
-    client: publicClient,
-    entryPoint: ENTRY_POINT_V07,
-    transport: http(PIMLICO_RPC),
-  });
-  const paymaster = createPaymasterClient({
-    chain: monadTestnet,
-    transport: http(PIMLICO_RPC),
-  });
-
-  console.log("[SA] init done");
-  return { smartAccount, bundler, paymaster, address: smartAccount.address };
+  console.log("[SA] ✅ Session Account created:", sessionAccount.address);
+  return sessionAccount;
 }
 
-export async function sendCalls(ctx, { to, data, value = 0n }) {
-  const { bundler, smartAccount, paymaster } = ctx;
-  console.log("[SA] sendUserOperation preparing…");
-  const { maxFeePerGas, maxPriorityFeePerGas } = await getPimlicoGas(bundler);
-  console.log("[SA] gas", { maxFeePerGas: String(maxFeePerGas), maxPriorityFeePerGas: String(maxPriorityFeePerGas) });
+/**
+ * Grants permissions to the session account using WAGMI wallet client
+ * User's EOA grants permission to session account to perform operations
+ */
+export async function grantPermissions(sessionAccount, walletClient, chainId) {
+  console.log("[SA] 📜 Granting permissions...");
+  
+  if (!sessionAccount) {
+    throw new Error("Session account not found");
+  }
 
-  const hash = await withTimeout(
-    bundler.sendUserOperation({
-      account: smartAccount,
-      calls: [{ to, data, value }],
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      paymaster,
-    }),
-    20000,
-    "sendUserOperation"
-  );
+  if (!walletClient) {
+    throw new Error("Wallet client not connected");
+  }
 
-  console.log("[SA] userOp submitted:", hash);
-  return { hash };
+  try {
+    const client = walletClient.extend(erc7715ProviderActions());
+    const currentTime = Math.floor(Date.now() / 1000);
+    const expiry = currentTime + 24 * 60 * 60 * 30; // 30 days
+
+    const permissions = await client.requestExecutionPermissions([{
+      chainId: chainId || SEPOLIA_CHAIN_ID,
+      expiry,
+      signer: {
+        type: "account",
+        data: {
+          address: sessionAccount.address,
+        },
+      },
+      isAdjustmentAllowed: true,
+      permission: {
+        type: "native-token-periodic",
+        data: {
+          periodAmount: 1000000000000000n, // 0.001 ETH in wei
+          periodDuration: 86400, // 1 day in seconds
+          justification: "Permission for Crypto Titanic rescue operations",
+        },
+      },
+    }]);
+
+    console.log("[SA] ✅ Permissions granted!");
+    return permissions[0];
+  } catch (error) {
+    console.error("[SA] ❌ Permission grant failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Initialize smart account context
+ * Returns session account and clients ready to use
+ */
+export async function initSmartAccountContext(publicClient) {
+  console.log("[SA] 🏗️ Init Smart Account Context...");
+
+  // Create session account
+  const sessionAccount = await createSessionAccount(publicClient);
+
+  // Create bundler and pimlico clients
+  console.log("[SA] 📦 Setup Bundler & Pimlico...");
+  const bundlerClient = bundlerClientFactory(SEPOLIA_CHAIN_ID);
+  const pimlicoClient = pimlicoClientFactory(SEPOLIA_CHAIN_ID);
+
+  console.log("[SA] 🎉 Context ready!");
+
+  return {
+    sessionAccount,
+    bundlerClient,
+    pimlicoClient,
+    publicClient,
+    address: sessionAccount.address,
+  };
+}
+
+/**
+ * Sends a regular user operation WITHOUT delegation
+ * Use this for normal game flow (no permissions needed)
+ */
+export async function sendUserOperation(ctx, { to, data, value = 0n }) {
+  const { bundlerClient, pimlicoClient, sessionAccount, publicClient } = ctx;
+  
+  console.log("[SA] 📤 Send regular UserOp (no delegation)...");
+  console.log("[SA]   To:", to);
+  console.log("[SA]   Session Account:", sessionAccount.address);
+
+  try {
+    // Get gas prices
+    const { fast: fee } = await pimlicoClient.getUserOperationGasPrice();
+    console.log("[SA] ⛽ Gas:", String(fee.maxFeePerGas));
+
+    // Send regular user operation (NO delegation!)
+    console.log("[SA] 🚀 Sending regular UserOperation...");
+    const hash = await withTimeout(
+      bundlerClient.sendUserOperation({
+        account: sessionAccount,
+        calls: [{ to, data, value }],
+        ...fee,
+      }),
+      30000,
+      "sendUserOperation"
+    );
+
+    console.log("[SA] ✅ UserOp Hash:", hash);
+    console.log("[SA] 🔍 Track:", userOpTrackUrl(hash));
+
+    // Wait for receipt
+    const { receipt } = await bundlerClient.waitForUserOperationReceipt({ hash });
+    console.log("[SA] ✅ Transaction:", receipt.transactionHash);
+
+    return { 
+      hash, 
+      txHash: receipt.transactionHash 
+    };
+  } catch (error) {
+    console.error("[SA] ❌ Failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Sends a user operation with delegation
+ * Use this for agent flow (requires permissions)
+ */
+export async function sendCalls(ctx, { to, data, value = 0n }, permission) {
+  const { bundlerClient, pimlicoClient, sessionAccount, publicClient } = ctx;
+  
+  console.log("[SA] 📤 Send UserOp with delegation...");
+  console.log("[SA]   To:", to);
+  console.log("[SA]   Session Account:", sessionAccount.address);
+
+  if (!permission) {
+    throw new Error("No permission granted! Call grantPermissions first.");
+  }
+
+  try {
+    const { context, signerMeta } = permission;
+
+    if (!signerMeta || !context) {
+      throw new Error("Invalid permission data");
+    }
+
+    const { delegationManager } = signerMeta;
+
+    // Get gas prices
+    const { fast: fee } = await pimlicoClient.getUserOperationGasPrice();
+    console.log("[SA] ⛽ Gas:", String(fee.maxFeePerGas));
+
+    // Send user operation with delegation
+    console.log("[SA] 🚀 Sending UserOperation with delegation...");
+    const hash = await withTimeout(
+      bundlerClient.sendUserOperationWithDelegation({
+        publicClient,
+        account: sessionAccount,
+        calls: [{
+          to,
+          data,
+          value,
+          permissionsContext: context,
+          delegationManager,
+        }],
+        ...fee,
+      }),
+      30000,
+      "sendUserOperation"
+    );
+
+    console.log("[SA] ✅ UserOp Hash:", hash);
+    console.log("[SA] 🔍 Track:", userOpTrackUrl(hash));
+
+    // Wait for receipt
+    const { receipt } = await bundlerClient.waitForUserOperationReceipt({ hash });
+    console.log("[SA] ✅ Transaction:", receipt.transactionHash);
+
+    return { 
+      hash, 
+      txHash: receipt.transactionHash 
+    };
+  } catch (error) {
+    console.error("[SA] ❌ Failed:", error);
+    throw error;
+  }
+}
+
+export function clearSessionKey() {
+  localStorage.removeItem("crypto_titanic_session_key");
+  console.log("[SA] 🗑️ Session key cleared");
+}
+
+export function clearPermission() {
+  localStorage.removeItem("crypto_titanic_permission");
+  delete window._permission;
+  console.log("[SA] 🗑️ Permission cleared");
 }

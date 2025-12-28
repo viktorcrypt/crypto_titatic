@@ -1,11 +1,23 @@
-import { defineChain } from "viem";
+import { sepolia } from "viem/chains";
 
-export const monadTestnet = defineChain({
-  id: 0x279f, 
-  name: "Monad Testnet",
-  nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
-  rpcUrls: { default: { http: [import.meta.env.VITE_MONAD_RPC] } },
-  blockExplorers: {
-    default: { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" },
-  },
-});
+export const ACTIVE_CHAIN = sepolia;
+
+export function getChainName() {
+  return "Sepolia";
+}
+
+export function getChainId() {
+  return 11155111;
+}
+
+export function getExplorerUrl() {
+  return "https://sepolia.etherscan.io";
+}
+
+export function getExplorerTxUrl(hash) {
+  return `https://sepolia.etherscan.io/tx/${hash}`;
+}
+
+export function getExplorerAddressUrl(address) {
+  return `https://sepolia.etherscan.io/address/${address}`;
+}

@@ -1,148 +1,160 @@
-// src/pages/BoardingScreen.jsx
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { connectEOA } from "../lib/wallet.js";
-import {
-  initSmartAccount,
-  makePublicClient,
-  monadAddressUrl,
-  userOpTrackUrl,
-} from "../lib/smartAccount.js";
-import { warmup } from "../lib/warmup.js";
-
-const LS_KEY = "sa_initialized";
+import { useAccount, useConnect, usePublicClient, useWalletClient, useChainId } from "wagmi";
+import { createSessionAccount, grantPermissions, initSmartAccountContext } from "../lib/smartAccount.js";
 
 export default function BoardingScreen() {
-  const [connecting, setConnecting] = useState(false);
-  const [ctx, setCtx] = useState(null); 
-  const [eoa, setEoa] = useState("");
-  const [initialized, setInitialized] = useState(
-    typeof window !== "undefined" && localStorage.getItem(LS_KEY) === "1"
-  );
-  const [lastOp, setLastOp] = useState(null);
-  const navigate = useNavigate();
-
-  
-  useEffect(() => {
-    async function checkDeployed() {
+  const [sessionAccount, setSessionAccount] = useState(null);
+  const [ctx, setCtx] = useState(null);
+  const [permission, setPermission] = useState(() => {
+    // Load permission from localStorage on mount
+    const saved = localStorage.getItem("crypto_titanic_permission");
+    if (saved) {
       try {
-        if (!ctx) return;
-        const pc = makePublicClient();
-        const code = await pc.getCode({ address: ctx.address });
-        if (code && code !== "0x") {
-          setInitialized(true);
-          localStorage.setItem(LS_KEY, "1");
-        }
-      } catch {}
+        const parsed = JSON.parse(saved);
+        window._permission = parsed;
+        return parsed;
+      } catch (e) {
+        console.error("[Boarding] Failed to parse saved permission:", e);
+      }
     }
-    checkDeployed();
-  }, [ctx]);
+    return null;
+  });
+  const [grantingPermissions, setGrantingPermissions] = useState(false);
+  
+  const navigate = useNavigate();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+  const chainId = useChainId();
+
+  // Auto-create session account when connected
+  useEffect(() => {
+    async function setup() {
+      if (!isConnected || !publicClient || sessionAccount) return;
+      
+      try {
+        console.log("[Boarding] Creating session account...");
+        const sa = await createSessionAccount(publicClient);
+        setSessionAccount(sa);
+        
+        console.log("[Boarding] Creating context...");
+        const context = await initSmartAccountContext(publicClient);
+        setCtx(context);
+        
+        // Save globally
+        window._smartAccountContext = context;
+        
+        console.log("[Boarding] ✅ Ready!");
+      } catch (e) {
+        console.error("[Boarding] Setup error:", e);
+      }
+    }
+    
+    setup();
+  }, [isConnected, publicClient, sessionAccount]);
 
   async function handleConnect() {
-    try {
-      setConnecting(true);
-      
-      const { address } = await connectEOA();
-      setEoa(address);
+    const connector = connectors[0]; // metaMask
+    if (connector) {
+      connect({ connector });
+    }
+  }
 
+  async function handleGrantPermissions() {
+    if (!sessionAccount || !walletClient) return;
+    
+    try {
+      setGrantingPermissions(true);
+      console.log("[Boarding] Granting permissions...");
       
-      const saCtx = await initSmartAccount();
-      setCtx(saCtx);
+      const perm = await grantPermissions(sessionAccount, walletClient, chainId);
+      setPermission(perm);
+      
+      // Save permission to localStorage AND globally
+      localStorage.setItem("crypto_titanic_permission", JSON.stringify(perm));
+      window._permission = perm;
+      
+      console.log("[Boarding] ✅ Permissions granted!");
     } catch (e) {
-      console.error(e);
-      alert(e.message || "Failed to connect wallet");
+      console.error("[Boarding] Permission error:", e);
+      alert(e.message || "Failed to grant permissions");
     } finally {
-      setConnecting(false);
+      setGrantingPermissions(false);
     }
   }
 
-  async function handleWarmup() {
-    try {
-      if (!ctx) throw new Error("Smart Account not initialized yet");
-      const userOpHash = await warmup(ctx); 
-      setInitialized(true);
-      localStorage.setItem(LS_KEY, "1");
-      setLastOp({
-        sa: ctx.address,
-        explorer: monadAddressUrl(ctx.address),
-        userOp: userOpTrackUrl(userOpHash),
-      });
-    } catch (e) {
-      console.error(e);
-      alert(e.message || "Warmup failed");
-    }
-  }
-
-  const connected = !!ctx;
+  const ready = isConnected && ctx;
+  const canPlay = ready && permission;
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-screen bg-slate-950 text-white text-center">
+    <div className="relative flex flex-col items-center justify-center h-screen bg-slate-950 text-white text-center px-6">
       <h1 className="text-5xl font-bold mb-4">🚢 Crypto Titanic</h1>
       <p className="text-white/70 mb-10 max-w-md">
         The great crypto ship is going down... Board now to take command of the last lifeboat.
       </p>
 
-      {!connected ? (
+      {!isConnected ? (
         <button
           onClick={handleConnect}
-          disabled={connecting}
-          className="bg-blue-500 hover:bg-blue-600 px-8 py-4 rounded-xl disabled:opacity-40"
+          className="bg-blue-500 hover:bg-blue-600 px-8 py-4 rounded-xl"
         >
-          {connecting ? "Connecting..." : "Board the Ship (Connect Wallet)"}
+          Board the Ship (Connect Wallet)
         </button>
+      ) : !ready ? (
+        <div className="text-white/70">Setting up your Smart Account...</div>
       ) : (
-        <div className="flex flex-col items-center gap-3">
-          <div className="text-sm text-green-400">
-            EOA: {eoa.slice(0, 6)}...{eoa.slice(-4)}
-          </div>
-          <div className="text-sm text-emerald-400">
-            Smart Account: {ctx.address.slice(0, 6)}...{ctx.address.slice(-4)}
+        <div className="flex flex-col items-center gap-4 w-full max-w-md">
+          {/* Connection Info */}
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+            <div className="text-xs text-white/50 uppercase tracking-wide">Your EOA</div>
+            <div className="text-sm text-green-400 font-mono">
+              {address.slice(0, 8)}...{address.slice(-6)}
+            </div>
+            
+            <div className="text-xs text-white/50 uppercase tracking-wide mt-3">Your Smart Account (Session)</div>
+            <div className="text-sm text-emerald-400 font-mono">
+              {sessionAccount.address.slice(0, 8)}...{sessionAccount.address.slice(-6)}
+            </div>
+
+            <div className="text-xs text-white/50 mt-3 flex items-center gap-2">
+              <span className={`inline-block w-2 h-2 rounded-full ${permission ? 'bg-emerald-400' : 'bg-yellow-400'} animate-pulse`} />
+              {permission ? "Permissions: Granted ✅" : "Permissions: Not granted"}
+            </div>
+
+            <div className="text-xs text-white/50 flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Gas Sponsor: Pimlico (Gasless ✨)
+            </div>
           </div>
 
-          
-          {!initialized && (
+          {/* Grant Permissions Button */}
+          {!permission && (
             <button
-              onClick={handleWarmup}
-              className="mt-2 bg-indigo-500 hover:bg-indigo-600 px-6 py-3 rounded-xl"
+              onClick={handleGrantPermissions}
+              disabled={grantingPermissions}
+              className="w-full bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-xl font-semibold transition disabled:opacity-40"
             >
-              Initialize Smart Account (one-time)
+              {grantingPermissions ? "Granting Permissions..." : "Grant Permissions (Required)"}
             </button>
           )}
 
-          
-          {lastOp && (
-            <div className="mt-2 text-xs text-white/70 space-y-1">
-              <div>
-                SA:&nbsp;
-                <a
-                  className="underline"
-                  href={lastOp.explorer}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {ctx.address.slice(0, 6)}...{ctx.address.slice(-4)}
-                </a>
-              </div>
-              <div>
-                UserOp:&nbsp;
-                <a
-                  className="underline"
-                  href={lastOp.userOp}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {lastOp.userOp.slice(0, 38)}…
-                </a>
-              </div>
-            </div>
-          )}
-
+          {/* Start Button */}
           <button
             onClick={() => navigate("/intro")}
-            className="mt-2 bg-emerald-500 hover:bg-emerald-600 px-8 py-4 rounded-xl"
+            disabled={!canPlay}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 px-8 py-4 rounded-xl font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Set Sail →
+            {canPlay ? "Set Sail →" : "Grant permissions first"}
           </button>
+
+          {permission && (
+            <p className="text-xs text-white/60 text-center">
+              You've granted the session account permission to act on your behalf.<br />
+              This enables both manual play and agent automation.
+            </p>
+          )}
         </div>
       )}
     </div>

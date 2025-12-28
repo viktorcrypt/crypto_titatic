@@ -3,7 +3,7 @@ export default function TokenDraggable({ token, pos }) {
     e.dataTransfer.setData("text/plain", token.symbol);
     
     const img = new Image();
-    img.src = /logos/${token.symbol.toLowerCase()}.svg;
+    img.src = `/logos/${token.symbol.toLowerCase()}.svg`;
     e.dataTransfer.setDragImage(img, 16, 16);
   }
 
@@ -13,12 +13,12 @@ export default function TokenDraggable({ token, pos }) {
       onDragStart={handleDragStart}
       className="absolute cursor-grab active:cursor-grabbing"
       style={{ left: pos.left, top: pos.top }}
-      title={${token.name} (${token.symbol})}
+      title={`${token.name} (${token.symbol})`}
     >
-      
+      {/* Icon */}
       <div style={{ transform: "rotate(10deg)" }}>
         <img
-          src={/logos/${token.symbol.toLowerCase()}.svg}
+          src={`/logos/${token.symbol.toLowerCase()}.svg`}
           className="h-10 w-10 rounded-full ring-2 ring-white/50 bg-white shadow"
           draggable={false}
         />

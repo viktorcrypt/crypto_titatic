@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AppProvider } from "./providers/AppProvider.jsx";
 
 import BoardingScreen from "./pages/BoardingScreen.jsx";
 import IntroScene from "./pages/IntroScene.jsx";   
@@ -14,11 +15,13 @@ const router = createBrowserRouter([
   { path: "/intro", element: <IntroScene /> }, 
   { path: "/app", element: <AppPage /> },   
   { path: "/stats", element: <StatsPage /> },
-   { path: "/agent", element: <AgentPage /> },
+  { path: "/agent", element: <AgentPage /> },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AppProvider>
+      <RouterProvider router={router} />
+    </AppProvider>
   </StrictMode>
 );

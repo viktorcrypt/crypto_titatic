@@ -4,11 +4,12 @@ import {
 } from "./rescueAbi.js";
 
 import {
-  initSmartAccount,
   makeCalldata,
+  sendUserOperation,
   sendCalls,
   userOpTrackUrl,
   makePublicClient,
+  initSmartAccountContext,
 } from "../lib/smartAccount.js";
 
 import { TOKENS } from "./tokens.js";
@@ -23,12 +24,12 @@ function weightOf(symbol) {
 
 export async function ensureCtx() {
   if (_ctx) return _ctx;
-  const ctx = await initSmartAccount();
+  const pc = makePublicClient();
+  const ctx = await initSmartAccountContext(pc);
   return (_ctx = ctx);
 }
 
 export async function recordRescue(symbols, opts = {}) {
-  
   const byAgent = !!opts.byAgent;
 
   console.log("[onchain] recordRescue symbols:", symbols);
@@ -36,11 +37,9 @@ export async function recordRescue(symbols, opts = {}) {
   const ctx = await ensureCtx();
   console.log("[onchain] SA ready:", ctx.address);
 
-  
   const totalWeightNum = symbols.reduce((s, sym) => s + weightOf(sym), 0);
   const totalWeight = BigInt(totalWeightNum);
 
-  
   const encoded = encodeAbiParameters(
     [
       { type: "string[]" },
@@ -51,7 +50,6 @@ export async function recordRescue(symbols, opts = {}) {
   );
   const selectionHash = keccak256(encoded);
 
-  
   const data = makeCalldata(RESCUE_LOG_ABI, "logRescue", [
     symbols,
     totalWeight,
@@ -62,7 +60,6 @@ export async function recordRescue(symbols, opts = {}) {
   const selector = data.slice(0, 10);
   console.log("[onchain] calldata selector:", selector, "(expect logRescue)");
 
-  
   try {
     console.log("[onchain] simulate start");
     const pc = makePublicClient();
@@ -75,12 +72,11 @@ export async function recordRescue(symbols, opts = {}) {
     console.log("[onchain] simulate ok");
   } catch (e) {
     console.warn("[onchain] simulate skipped/warn:", e?.message || e);
-    
   }
 
-  
+  // Send regular UserOperation (no permissions needed for normal game)
   console.log("[onchain] sendUserOp start");
-  const { hash } = await sendCalls(ctx, {
+  const { hash } = await sendUserOperation(ctx, {
     to: RESCUE_LOG_ADDR,
     data,
   });
@@ -90,4 +86,5 @@ export async function recordRescue(symbols, opts = {}) {
     userOpUrl: userOpTrackUrl(hash),
   };
 }
-export { makeCalldata, sendCalls, userOpTrackUrl } from "../lib/smartAccount.js";
+
+export { makeCalldata, sendUserOperation, sendCalls, userOpTrackUrl } from "../lib/smartAccount.js";
