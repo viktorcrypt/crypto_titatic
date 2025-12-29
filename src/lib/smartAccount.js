@@ -13,7 +13,7 @@ import { erc7715ProviderActions } from "@metamask/smart-accounts-kit/actions";
 import { bundlerClientFactory } from "../services/bundlerClient.js";
 import { pimlicoClientFactory } from "../services/pimlicoClient.js";
 
-// Sepolia Configuration
+
 const SEPOLIA_RPC = import.meta.env.VITE_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
 const SEPOLIA_CHAIN_ID = 11155111;
 
@@ -75,7 +75,7 @@ export async function createSessionAccount(publicClient) {
   
   console.log("[SA] 🔑 Session key address:", account.address);
 
-  // Create Hybrid Smart Account - EXACTLY as in their code
+  
   const sessionAccount = await toMetaMaskSmartAccount({
     client: publicClient,
     implementation: Implementation.Hybrid,
@@ -121,8 +121,8 @@ export async function grantPermissions(sessionAccount, walletClient, chainId) {
       permission: {
         type: "native-token-periodic",
         data: {
-          periodAmount: 1000000000000000n, // 0.001 ETH in wei
-          periodDuration: 86400, // 1 day in seconds
+          periodAmount: 1000000000000000n, 
+          periodDuration: 86400, 
           justification: "Permission for Crypto Titanic rescue operations",
         },
       },
@@ -136,10 +136,7 @@ export async function grantPermissions(sessionAccount, walletClient, chainId) {
   }
 }
 
-/**
- * Initialize smart account context
- * Returns session account and clients ready to use
- */
+
 export async function initSmartAccountContext(publicClient) {
   console.log("[SA] 🏗️ Init Smart Account Context...");
 
@@ -162,10 +159,7 @@ export async function initSmartAccountContext(publicClient) {
   };
 }
 
-/**
- * Sends a regular user operation WITHOUT delegation
- * Use this for normal game flow (no permissions needed)
- */
+
 export async function sendUserOperation(ctx, { to, data, value = 0n }) {
   const { bundlerClient, pimlicoClient, sessionAccount, publicClient } = ctx;
   
@@ -174,11 +168,11 @@ export async function sendUserOperation(ctx, { to, data, value = 0n }) {
   console.log("[SA]   Session Account:", sessionAccount.address);
 
   try {
-    // Get gas prices
+    
     const { fast: fee } = await pimlicoClient.getUserOperationGasPrice();
     console.log("[SA] ⛽ Gas:", String(fee.maxFeePerGas));
 
-    // Send regular user operation (NO delegation!)
+    
     console.log("[SA] 🚀 Sending regular UserOperation...");
     const hash = await withTimeout(
       bundlerClient.sendUserOperation({
@@ -193,7 +187,7 @@ export async function sendUserOperation(ctx, { to, data, value = 0n }) {
     console.log("[SA] ✅ UserOp Hash:", hash);
     console.log("[SA] 🔍 Track:", userOpTrackUrl(hash));
 
-    // Wait for receipt
+    
     const { receipt } = await bundlerClient.waitForUserOperationReceipt({ hash });
     console.log("[SA] ✅ Transaction:", receipt.transactionHash);
 
@@ -207,10 +201,7 @@ export async function sendUserOperation(ctx, { to, data, value = 0n }) {
   }
 }
 
-/**
- * Sends a user operation with delegation
- * Use this for agent flow (requires permissions)
- */
+
 export async function sendCalls(ctx, { to, data, value = 0n }, permission) {
   const { bundlerClient, pimlicoClient, sessionAccount, publicClient } = ctx;
   
@@ -235,7 +226,7 @@ export async function sendCalls(ctx, { to, data, value = 0n }, permission) {
     const { fast: fee } = await pimlicoClient.getUserOperationGasPrice();
     console.log("[SA] ⛽ Gas:", String(fee.maxFeePerGas));
 
-    // Send user operation with delegation
+    
     console.log("[SA] 🚀 Sending UserOperation with delegation...");
     const hash = await withTimeout(
       bundlerClient.sendUserOperationWithDelegation({

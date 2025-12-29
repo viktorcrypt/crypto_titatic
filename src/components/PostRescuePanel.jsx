@@ -1,4 +1,3 @@
-// src/components/PostRescuePanel.jsx
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { recordRescue } from "../lib/onchain.js";
@@ -6,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 export default function PostRescuePanel({
   open,
-  getSymbols,          // () => string[]
-  onRecorded,          // (result) => void   
+  getSymbols,          
+  onRecorded,          
 }) {
   const [stage, setStage] = useState("idle"); 
   const [result, setResult] = useState(null);

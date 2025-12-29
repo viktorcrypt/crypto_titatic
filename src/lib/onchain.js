@@ -74,7 +74,7 @@ export async function recordRescue(symbols, opts = {}) {
     console.warn("[onchain] simulate skipped/warn:", e?.message || e);
   }
 
-  // Send regular UserOperation (no permissions needed for normal game)
+  
   console.log("[onchain] sendUserOp start");
   const { hash } = await sendUserOperation(ctx, {
     to: RESCUE_LOG_ADDR,

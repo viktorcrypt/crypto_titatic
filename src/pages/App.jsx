@@ -5,15 +5,16 @@ import TokenDraggable from "../components/TokenDraggable.jsx";
 import LifeboatDrop from "../components/LifeboatDrop.jsx";
 import { TOKENS, CAPACITY } from "../lib/tokens.js";
 import { deckPos } from "../lib/deck.js";
-import PostRescuePanel from "../components/PostRescuePanel.jsx"; 
+import { recordRescue } from "../lib/onchain.js";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BOAT_CAPACITY = CAPACITY;
-const PHONK_BPM = 110; 
+const PHONK_BPM = 110;
 
-
-function fadeAudio(el, { to = 0, ms = 7000 }) { 
+function fadeAudio(el, { to = 0, ms = 7000 }) {
   const from = el.volume ?? 0.5;
-  const steps = 60; 
+  const steps = 60;
   const dt = ms / steps;
   let i = 0;
   const id = setInterval(() => {
@@ -28,10 +29,12 @@ function fadeAudio(el, { to = 0, ms = 7000 }) {
 }
 
 export default function AppPage() {
+  const navigate = useNavigate();
   const [boat, setBoat] = useState([]);
   const [sinking, setSinking] = useState(false);
-  const [rescueDone, setRescueDone] = useState(false); 
-  const [showRecord, setShowRecord] = useState(false);  
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [result, setResult] = useState(null);
+  
   const stormRef = useRef(null);
   const phonkRef = useRef(null);
   const [muted, setMuted] = useState(false);
@@ -68,11 +71,12 @@ export default function AppPage() {
 
     const storm = stormRef.current;
     const phonk = phonkRef.current;
+    const symbols = boat.map((b) => b.symbol);
 
-   
-    setRescueDone(true);
+    // Start sinking animation
+    setSinking(true);
 
-    
+    // Start phonk music
     if (phonk) {
       phonk.loop = true;
       try {
@@ -82,37 +86,32 @@ export default function AppPage() {
       } catch (_) {}
     }
 
-    
+    // Fade storm
     if (storm) {
       fadeAudio(storm, { to: 0, ms: 7000 });
     }
 
-    
-    setSinking(true);
-
-    
-    setTimeout(() => setShowRecord(true), 7200);
-  }
-
-  
-  const getSymbols = () => boat.map((b) => b.symbol);
-  function onRecorded() {
-    
-  }
-  function onShowStats() {
-    
-    alert("Лидерборд спасённых (Envio) — добавим дальше 👍");
-  }
-  function onDelegate() {
-    
-    alert("Делегирование агенту — добавим дальше 👍");
+    // Wait for animation (3 seconds), then show success immediately
+    setTimeout(() => {
+      setShowSuccess(true);
+      
+      // Record rescue in background (don't wait!)
+      recordRescue(symbols)
+        .then((r) => {
+          console.log("[App] Rescue recorded!", r);
+          setResult(r);
+        })
+        .catch((e) => {
+          console.error("[App] Rescue failed:", e);
+          // Don't show error - user already moved on
+        });
+    }, 3000);
   }
 
   return (
     <div className="relative">
-      
       <ShipScene sinking={sinking} beat={true} bpm={PHONK_BPM}>
-        {/* mute */}
+        {/* Mute button */}
         <div className="absolute right-6 top-6 z-[200]" style={{ transform: "rotate(10deg)" }}>
           <button
             onClick={() => {
@@ -122,12 +121,12 @@ export default function AppPage() {
               setMuted(next);
               if (storm) storm.muted = next;
               if (phonk) phonk.muted = next;
-              
-              if (!next && rescueDone && phonk && phonk.paused) {
+
+              if (!next && sinking && phonk && phonk.paused) {
                 phonk.play().catch(() => {});
               }
-              
-              if (!next && !rescueDone && storm && storm.paused) {
+
+              if (!next && !sinking && storm && storm.paused) {
                 storm.play().catch(() => {});
               }
             }}
@@ -137,21 +136,21 @@ export default function AppPage() {
           </button>
         </div>
 
-       
+        {/* Audio */}
         <audio ref={stormRef} src="/sfx/storm.mp3" preload="auto" />
         <audio ref={phonkRef} src="/sfx/phonkmusic.mp3" preload="auto" />
 
-        
+        {/* Tokens on deck */}
         {!sinking &&
           TOKENS.filter((t) => !isAlready(t.symbol)).map((t) => (
             <TokenDraggable key={t.symbol} token={t} pos={deckPos(t.symbol)} />
           ))}
 
-        
+        {/* Lifeboat */}
         <div
           className={`absolute left-1/2 top-[47vh] -translate-x-1/2 z-[150] transition-transform duration-[7000ms] ease-in-out ${
             sinking ? "translate-x-[400px] translate-y-[-60px]" : ""
-          }`} 
+          }`}
           style={{ transform: "translateX(-50%) rotate(10deg)" }}
         >
           <LifeboatDrop
@@ -172,15 +171,15 @@ export default function AppPage() {
             <button
               className="rounded-xl px-6 py-3 bg-blue-500 hover:bg-blue-600 shadow disabled:opacity-40"
               onClick={handleRescue}
-              disabled={boat.length === 0}
+              disabled={boat.length === 0 || sinking}
             >
               Спасти выбранные
             </button>
           </div>
         </div>
 
-        
-        {rescueDone && (
+        {/* Trollface - показывается когда тонет! */}
+        {sinking && (
           <img
             src="/troll.png"
             className="fixed bottom-8 right-8 w-28 h-28 z-[300] animate-troll-vibe pointer-events-none select-none"
@@ -189,7 +188,7 @@ export default function AppPage() {
         )}
       </ShipScene>
 
-      
+      {/* Bottom bar */}
       <div className="fixed inset-x-0 bottom-6 z-[200] flex justify-center pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-4 rounded-2xl bg-black/40 border border-white/15 px-4 py-2 backdrop-blur">
           <span className="text-sm text-white/80">
@@ -197,7 +196,7 @@ export default function AppPage() {
           </span>
           <button
             onClick={handleRescue}
-            disabled={boat.length === 0}
+            disabled={boat.length === 0 || sinking}
             className="rounded-xl px-5 py-2 bg-blue-500 hover:bg-blue-600 shadow disabled:opacity-40"
           >
             SAVE COIN
@@ -205,14 +204,73 @@ export default function AppPage() {
         </div>
       </div>
 
-      
-      <PostRescuePanel
-        open={showRecord}
-        getSymbols={() => boat.map((b) => b.symbol)}
-        onRecorded={() => {}}
-        onShowStats={onShowStats}
-        onDelegate={onDelegate}
-      />
+      {/* Success Modal - показывается СРАЗУ, запись идет фоном */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            className="fixed inset-0 z-[400] flex items-center justify-center p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Bright background */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-amber-200 via-yellow-100 to-white"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            />
+
+            <motion.div
+              className="relative w-full max-w-xl rounded-3xl border border-black/10 bg-white/90 backdrop-blur p-8 shadow-2xl"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 160, damping: 18 }}
+            >
+              <div className="text-center mb-6">
+                <div className="text-6xl mb-4">✅</div>
+                <h2 className="text-3xl font-black mb-2">Rescue Complete!</h2>
+                <p className="text-gray-700 mb-2">
+                  Your coins are being recorded on-chain via gasless UserOperation
+                </p>
+                {!result && (
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    Recording in background...
+                  </div>
+                )}
+              </div>
+
+              {result?.userOpUrl && (
+                <a
+                  href={result.userOpUrl}
+                  target="_blank"
+                  className="block mb-6 text-center underline text-blue-600 hover:text-blue-700"
+                  rel="noreferrer"
+                >
+                  🔍 View Transaction on Pimlico Explorer
+                </a>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => navigate("/stats")}
+                  className="rounded-xl px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg transform hover:scale-105 transition"
+                >
+                  🏆 View Leaderboard
+                </button>
+                <button
+                  onClick={() => navigate("/agent")}
+                  className="rounded-xl px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold shadow-lg transform hover:scale-105 transition"
+                >
+                  🤖 Try Agent Strategies
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes trollVibe {
@@ -222,7 +280,7 @@ export default function AppPage() {
           75% { transform: translate(-2px, 3px) rotate(-3deg); }
         }
         .animate-troll-vibe {
-          animation: trollVibe 0.25s infinite; /* чуть медленнее, чтобы не мельтешило */
+          animation: trollVibe 0.25s infinite;
         }
       `}</style>
     </div>

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-const LINE_DURATION = 3800;     
+const LINE_DURATION = 4200;     
 const OUTRO_FADE = 1200;        
 const AFTER_LAST_HOLD = 800;    
 
@@ -16,7 +16,7 @@ export default function IntroScene() {
   const creakRef = useRef(null);
 
   const lines = [
-    "The year is 2025.",
+    "The year is 2026.",  
     "The great crypto ship is sinking…",
     "Billions in tokens are going down with it.",
     "Only one lifeboat remains.",
@@ -99,13 +99,16 @@ export default function IntroScene() {
             Crypto Titanic
           </h1>
 
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="wait">
             <motion.p
               key={step}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.9 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ 
+                duration: 1.0,
+                ease: "easeInOut"
+              }}
               className="mx-auto max-w-4xl text-2xl md:text-4xl lg:text-5xl font-light text-white/90 leading-snug"
               style={{ letterSpacing: "0.01em" }}
             >

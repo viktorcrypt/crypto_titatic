@@ -1,4 +1,3 @@
-// src/components/ShipScene.jsx
 export default function ShipScene({ children, sinking = false, beat = false, bpm = 100 }) {
   
   const beatDur = `${Math.max(0.25, 60 / bpm)}s`;
