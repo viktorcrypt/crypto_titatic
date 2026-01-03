@@ -10,6 +10,39 @@ This project demonstrates **Account Abstraction (ERC-4337)** and **Advanced Perm
 
 ---
 
+## 🔑 Advanced Permissions Usage
+
+### 1. Requesting Advanced Permissions
+**Code:** [`src/pages/Boarding.jsx` (Lines 45-95)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/pages/Boarding.jsx#L45-L95)
+
+Players grant ERC-7715 permissions during onboarding:
+- Create session account with local signer
+- Request permissions for periodic ETH/USDC transfers
+- Store permission context for later use
+
+### 2. Redeeming Advanced Permissions  
+**Code:** [`src/pages/Agent.jsx` (Lines 55-90)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/pages/Agent.jsx#L55-L90)
+
+AI agents autonomously execute rescues using granted permissions:
+- Agents select tokens based on strategy (Random, Balanced, MaxCap, Underdog, Momentum)
+- Execute rescue operations every hour without user approval
+- All operations marked as "by agent" in smart contract
+
+**Code:** [`src/lib/onchain.js` (Lines 140-170)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/lib/onchain.js#L140-L170)
+
+User rescue operations using session account context.
+
+---
+
+## Best Social Media Presence on X (Twitter)
+
+
+**Twitter:** https://x.com/MeganOe75615831
+
+
+
+---
+
 ## ✨ Features
 
 | Feature                       | Description                                                        |
@@ -41,7 +74,7 @@ This project demonstrates **Account Abstraction (ERC-4337)** and **Advanced Perm
 - Skip button available
 
 ### 3️⃣ **Rescue Mission**
-- Drag tokens onto the lifeboat
+- Drag tokens onto the lifeboat (capacity: 100 weight)
 - Select from: BTC, ETH, SOL, LINK, DOGE, PEPE, LINEA, MON
 - Click "SAVE COIN" → automatic on-chain recording
 - Watch the ship sink with trollface easter egg 😈
@@ -79,40 +112,23 @@ Always rescues BTC and ETH — plays it safe with blue chips
 
 ### **🎗️ Underdog Supporter**
 Champions the forgotten — rescues tokens with the **fewest votes**
-- Reads on-chain stats
-- Picks TOP 3 with lowest rescue counts
-- Gives everyone a chance!
 
 ### **📊 Momentum Trader**
 Follows AI agent trends — picks what **other bots are rescuing**
-- Analyzes agent rescue patterns
-- Rides the bot momentum wave
-- Smart contract integration for live data
 
 **All agents run autonomously after one-time permission grant!**
 
 ---
 
-## 🔗 Deployment Info
-
-**Network:** Sepolia Testnet (Chain ID: 11155111)  
-**Contract:** `RescueLog.sol`   
-**RPC:** `https://ethereum-sepolia-rpc.publicnode.com`  
-**Bundler:** Pimlico  
-**Paymaster:** Pimlico (100% gasless)  
-
----
-
 ## 🧰 Tech Stack
 
-- **Frontend:** React + Vite + Tailwind CSS
+- **Frontend:** React + Vite + Tailwind CSS + Framer Motion
 - **Blockchain:** Viem + Wagmi
 - **Smart Accounts:** MetaMask Smart Accounts Kit (Hybrid Implementation)
 - **Permissions:** ERC-7715 Advanced Permissions
 - **AA Infrastructure:** ERC-4337 (EntryPoint v0.7)
 - **Bundler/Paymaster:** Pimlico
 - **Network:** Ethereum Sepolia
-- **Animations:** Framer Motion
 
 ---
 
@@ -120,26 +136,20 @@ Follows AI agent trends — picks what **other bots are rescuing**
 
 ### Prerequisites
 - **MetaMask Flask** (required for ERC-7715)
-  - Download: [metamask.io/flask](https://metamask.io/flask/)
 - Node.js v18+
-- Some Sepolia ETH (for initial setup)
-- Sepolia USDC (for testing rescues)
+- Sepolia ETH & USDC for testing
 
 ### Installation
 
 ```bash
-# Clone repository
 git clone https://github.com/viktorcrypt/crypto_titatic.git
 cd crypto-titanic
 
-# Install dependencies
 npm install
 
-# Set up environment variables
 cp .env.example .env
 # Add your Pimlico API key
 
-# Run development server
 npm run dev
 ```
 
@@ -153,51 +163,17 @@ VITE_RESCUELOG_ADDRESS=0x...
 
 ---
 
-## 📊 Smart Contract Functions
-
-### Core Rescue Functions
-```solidity
-// Record a rescue (human or agent)
-function logRescue(
-  string[] memory symbols,
-  uint256 totalWeight,
-  bool byAgent,
-  bytes32 selectionHash
-)
-
-// Get rescue counts for tokens
-function getCounts(string[] memory symbols) 
-  returns (uint256[] memory)
-
-// Get agent-specific counts
-function getAgentCounts(string[] memory symbols) 
-  returns (uint256[] memory)
-```
-
-### Events
-```solidity
-event Rescued(
-  address indexed by,
-  bytes32 indexed selectionHash,
-  string[] symbols,
-  uint256 totalWeight,
-  bool byAgent,
-  uint256 timestamp
-)
-```
-
-
 ## 🏆 MetaMask Hackathon - Integration Track
 
 This project demonstrates:
 
-1. ✅ **ERC-7715 Advanced Permissions** (one-time grant, autonomous operations)
-2. ✅ **MetaMask Smart Accounts Kit** (Hybrid implementation)
-3. ✅ **Account Abstraction** (ERC-4337 UserOperations)
-4. ✅ **Gasless Transactions** (Pimlico Paymaster)
-5. ✅ **Agent Automation** (5 AI strategies with on-chain verification)
-6. ✅ **Session Accounts** (local key management)
-7. ✅ **Production-Ready** (error handling, activity logs, beautiful UI)
+✅ **ERC-7715 Advanced Permissions** - one-time grant, autonomous agent operations  
+✅ **MetaMask Smart Accounts Kit** - Hybrid implementation  
+✅ **Account Abstraction** - ERC-4337 UserOperations  
+✅ **Gasless Transactions** - Pimlico Paymaster  
+✅ **AI Agent Automation** - 5 strategies with on-chain verification  
+✅ **Session Accounts** - local key management  
+✅ **Beautiful UX** - ocean-themed UI with smooth animations  
 
 ---
 
@@ -209,10 +185,9 @@ This project demonstrates:
 
 ---
 
-
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file
+MIT License
 
 ---
 
