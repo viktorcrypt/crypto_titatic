@@ -13,33 +13,29 @@ This project demonstrates **Account Abstraction (ERC-4337)** and **Advanced Perm
 ## 🔑 Advanced Permissions Usage
 
 ### 1. Requesting Advanced Permissions
-**Code:** [`src/pages/Boarding.jsx` (Lines 45-95)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/pages/Boarding.jsx#L45-L95)
+**Code:** [`src/lib/smartAccount.js` (Lines 98-138)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/lib/smartAccount.js#L98-L138)
 
-Players grant ERC-7715 permissions during onboarding:
+Players grant ERC-7715 permissions during onboarding (`BoardingScreen.jsx` line 67):
 - Create session account with local signer
-- Request permissions for periodic ETH/USDC transfers
-- Store permission context for later use
+- Request permissions for periodic native token transfers
+- Store permission context for autonomous operations
 
 ### 2. Redeeming Advanced Permissions  
-**Code:** [`src/pages/Agent.jsx` (Lines 55-90)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/pages/Agent.jsx#L55-L90)
+**Code:** [`src/lib/smartAccount.js` (Lines 210-253)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/lib/smartAccount.js#L210-L253)
 
-AI agents autonomously execute rescues using granted permissions:
-- Agents select tokens based on strategy (Random, Balanced, MaxCap, Underdog, Momentum)
-- Execute rescue operations every hour without user approval
-- All operations marked as "by agent" in smart contract
+Session account executes operations using granted permissions:
+- Sends UserOperations with delegation context
+- Used by both players and AI agents
+- All operations are gasless via Pimlico Paymaster
 
-**Code:** [`src/lib/onchain.js` (Lines 140-170)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/lib/onchain.js#L140-L170)
+**Agent Implementation:** [`src/pages/Agent.jsx` (Lines 58-91)](https://github.com/viktorcrypt/crypto_titatic/blob/main/src/pages/Agent.jsx#L58-L91)
 
-User rescue operations using session account context.
+AI agents autonomously execute rescues every hour using granted permissions.
 
 ---
 
-## Best Social Media Presence on X (Twitter)
-
-
-**Twitter:** https://x.com/MeganOe75615831
-
-
+Best Social Media Presence on X (Twitter)
+Twitter: https://x.com/MeganOe75615831
 
 ---
 
@@ -65,7 +61,7 @@ User rescue operations using session account context.
 ### 1️⃣ **Boarding Screen**
 - Connect MetaMask Flask (required for ERC-7715)
 - Create session account (Hybrid Smart Account)
-- Grant permissions once (ETH + USDC periodic limits)
+- Grant permissions once (native token periodic limits)
 - Beautiful ocean-themed UI with animated water & sinking coins
 
 ### 2️⃣ **Intro Scene**
@@ -137,7 +133,7 @@ Follows AI agent trends — picks what **other bots are rescuing**
 ### Prerequisites
 - **MetaMask Flask** (required for ERC-7715)
 - Node.js v18+
-- Sepolia ETH & USDC for testing
+- Sepolia ETH for testing
 
 ### Installation
 
@@ -209,4 +205,4 @@ MIT License
 
 **🚢 The ship is sinking. Who will you save? 🚢**
 
-
+*Built with ERC-7715 Advanced Permissions*
